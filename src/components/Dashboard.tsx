@@ -38,33 +38,36 @@ export function Dashboard() {
 
   const navigate = useCallback(
     (next: NavSection, assetId?: string) => {
-      setSection(next)
-      if (next === 'shemitah') {
-        requestAnimationFrame(() => {
-          document.getElementById('shemitah')?.scrollIntoView({ behavior: 'smooth' })
-        })
-      }
-      if (next === 'macro') {
-        requestAnimationFrame(() => {
-          document
-            .getElementById('section-macro')
-            ?.scrollIntoView({ behavior: 'smooth' })
-        })
-      }
-      if (next === 'portfolio') {
-        requestAnimationFrame(() => {
-          document
-            .getElementById('portfolio-tracker')
-            ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        })
-      }
+      // Jump-to-asset always lands on full dashboard (not Macro-only feed).
       if (assetId) {
         setSection('dashboard')
-        setTimeout(() => scrollToAsset(assetId), 50)
+        setTimeout(() => scrollToAsset(assetId), 60)
+        return
       }
-      window.scrollTo({
-        top: 0,
-        behavior: next === 'dashboard' && !assetId ? 'smooth' : 'auto',
+
+      setSection(next)
+
+      // Keep URL hash in sync for shareable section links.
+      try {
+        if (next === 'dashboard') {
+          const { pathname, search } = window.location
+          window.history.replaceState(null, '', `${pathname}${search}`)
+        } else {
+          window.history.replaceState(null, '', `#${next}`)
+        }
+      } catch {
+        /* ignore */
+      }
+
+      requestAnimationFrame(() => {
+        if (next === 'macro') {
+          // Macro desk opens on equity benchmarks (first visible block).
+          document
+            .getElementById('section-equity')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          return
+        }
+        window.scrollTo({ top: 0, behavior: 'smooth' })
       })
     },
     [scrollToAsset],

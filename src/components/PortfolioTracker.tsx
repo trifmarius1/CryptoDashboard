@@ -416,6 +416,7 @@ export function PortfolioTracker({ variant = 'page', className }: Props) {
                       min="0"
                       defaultValue={r.holding.amount}
                       key={`${r.holding.id}-${r.holding.amount}`}
+                      aria-label={`Amount of ${r.asset.symbol}`}
                       onBlur={(e) => {
                         const v = Number(e.target.value)
                         if (Number.isFinite(v)) updateHolding(r.holding.id, { amount: v })

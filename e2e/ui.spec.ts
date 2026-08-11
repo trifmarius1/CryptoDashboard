@@ -226,3 +226,189 @@ test.describe('Security basics', () => {
     await expect(page.locator('#asset-spx-shemitah')).toHaveCount(1)
   })
 })
+
+test.describe('Buttons, controls & interactions', () => {
+  test('crypto cards do not show EUR chart currency toggle', async ({ page }) => {
+    await page.goto('/')
+    const btc = page.locator('#asset-btc-usd')
+    await expect(btc).toBeVisible({ timeout: 30_000 })
+    await expect(btc.getByRole('button', { name: '€ EUR' })).toHaveCount(0)
+    await expect(btc.getByRole('button', { name: '$ USD' })).toHaveCount(0)
+    await expect(btc.getByRole('group', { name: /Chart display currency/i })).toHaveCount(0)
+  })
+
+  test('Add crypto modal closes via Escape and Close button', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: /Add crypto/i }).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await page.keyboard.press('Escape')
+    await expect(dialog).toBeHidden({ timeout: 5_000 })
+
+    await page.getByRole('button', { name: /Add crypto/i }).click()
+    await expect(dialog).toBeVisible()
+    await page.getByTestId('add-crypto-close').click()
+    await expect(dialog).toBeHidden({ timeout: 5_000 })
+
+    // Backdrop click (outside panel) also closes
+    await page.getByRole('button', { name: /Add crypto/i }).click()
+    await expect(dialog).toBeVisible()
+    await page.getByTestId('add-crypto-dialog').click({ position: { x: 8, y: 8 } })
+    await expect(dialog).toBeHidden({ timeout: 5_000 })
+  })
+
+  test('add then remove a custom crypto card', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: /Add crypto/i }).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await expect(page.getByText(/\d[\d,]* USDT pairs/i)).toBeVisible({ timeout: 60_000 })
+    await page.getByPlaceholder(/Search/i).fill('LINK')
+    const addLink = page.getByTestId('add-coin-LINK')
+    await expect(addLink).toBeVisible({ timeout: 15_000 })
+    await addLink.click()
+    await expect(dialog).toBeHidden({ timeout: 10_000 })
+
+    const link = page.locator('#asset-crypto-link-usd')
+    await link.scrollIntoViewIfNeeded()
+    await expect(link).toBeVisible({ timeout: 20_000 })
+    await expect(link.locator('canvas').first()).toBeVisible({ timeout: 45_000 })
+
+    await link.getByRole('button', { name: /Remove LINK\/USD/i }).click()
+    await expect(page.locator('#asset-crypto-link-usd')).toHaveCount(0)
+  })
+
+  test('Shemitah overlay toggle on BTC chart', async ({ page }) => {
+    await page.goto('/')
+    const btc = page.locator('#asset-btc-usd')
+    await btc.scrollIntoViewIfNeeded()
+    const shemitahBtn = btc.getByRole('button', { name: /^Shemitah$/i })
+    await expect(shemitahBtn).toBeVisible({ timeout: 15_000 })
+    await expect(shemitahBtn).toHaveAttribute('aria-pressed', 'false')
+    await shemitahBtn.click()
+    await expect(shemitahBtn).toHaveAttribute('aria-pressed', 'true')
+    await shemitahBtn.click()
+    await expect(shemitahBtn).toHaveAttribute('aria-pressed', 'false')
+  })
+
+  test('timeframe days, weeks, years, all on BTC', async ({ page }) => {
+    await page.goto('/')
+    const btc = page.locator('#asset-btc-usd')
+    await btc.scrollIntoViewIfNeeded()
+    await expect(btc.locator('canvas').first()).toBeVisible({ timeout: 30_000 })
+
+    await btc.getByRole('tab', { name: /Days/i }).click()
+    await btc.getByRole('tab', { name: '7', exact: true }).first().click()
+    await expect(btc.locator('canvas').first()).toBeVisible()
+
+    await btc.getByRole('tab', { name: /Weeks/i }).click()
+    await btc.getByRole('tab', { name: '4', exact: true }).first().click()
+    await expect(btc.locator('canvas').first()).toBeVisible()
+
+    await btc.getByRole('tab', { name: /Years/i }).click()
+    for (const y of ['1', '2', '3', '4']) {
+      await expect(btc.getByRole('tab', { name: y, exact: true }).first()).toBeVisible()
+    }
+    await btc.getByRole('tab', { name: '2', exact: true }).first().click()
+    await expect(btc.locator('canvas').first()).toBeVisible()
+
+    await btc.getByRole('tab', { name: /^All$/i }).click()
+    await expect(btc.locator('canvas').first()).toBeVisible()
+  })
+
+  test('mobile nav: Home, Macro, Cycles round-trip', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    const nav = page.getByRole('navigation', { name: 'Primary' })
+
+    await nav.getByRole('button', { name: /Macro/i }).click()
+    await expect(page.getByRole('heading', { name: /Macro Desk/i })).toBeVisible({
+      timeout: 15_000,
+    })
+    await expect(page.locator('#asset-spx')).toBeVisible({ timeout: 20_000 })
+
+    await nav.getByRole('button', { name: /Cycles/i }).click()
+    await expect(page.getByRole('heading', { name: /Shemitah/i }).first()).toBeVisible({
+      timeout: 15_000,
+    })
+    await expect(page.locator('#asset-btc-usd-shemitah')).toBeVisible({ timeout: 20_000 })
+
+    await nav.getByRole('button', { name: /Home/i }).click()
+    await expect(page.getByRole('heading', { name: /Market Overview/i })).toBeVisible({
+      timeout: 15_000,
+    })
+    await expect(page.locator('#asset-btc-usd')).toBeVisible()
+  })
+
+  test('mobile hamburger opens and closes sidebar drawer', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/')
+    await page.getByRole('button', { name: /Open navigation/i }).click()
+    const side = page.getByRole('navigation', { name: 'Sidebar' })
+    await expect(side).toBeVisible()
+    await side.getByRole('button', { name: /Macro/i }).click()
+    await expect(page.getByRole('heading', { name: /Macro Desk/i })).toBeVisible({
+      timeout: 15_000,
+    })
+  })
+
+  test('portfolio: add holding, EUR toggle, remove holding', async ({ page }) => {
+    await page.setViewportSize({ width: 1400, height: 900 })
+    await page.goto('/')
+    const side = page.getByRole('navigation', { name: 'Sidebar' })
+    await side.getByRole('button', { name: /Portfolio/i }).click()
+    await expect(page.getByText(/Live Portfolio Tracker/i)).toBeVisible({ timeout: 15_000 })
+
+    const tracker = page.locator('#portfolio-tracker')
+    await tracker.getByLabel(/Amount held/i).fill('0.05')
+    await tracker.getByRole('button', { name: /Add to portfolio/i }).click()
+    await expect(tracker.getByText(/Total portfolio value/i)).toBeVisible()
+
+    // At least one remove control for a holding
+    const removeBtn = tracker.getByRole('button', { name: /Remove /i }).first()
+    await expect(removeBtn).toBeVisible({ timeout: 10_000 })
+
+    await tracker.getByRole('button', { name: '€ EUR' }).click()
+    await expect(tracker.getByText(/1 USD =/i)).toBeVisible({ timeout: 15_000 })
+    await tracker.getByRole('button', { name: '$ USD' }).click()
+
+    await removeBtn.click()
+  })
+
+  test('shemitah intelligence tabs switch content', async ({ page }) => {
+    await page.setViewportSize({ width: 1400, height: 900 })
+    await page.goto('/')
+    const side = page.getByRole('navigation', { name: 'Sidebar' })
+    await side.getByRole('button', { name: /Shemitah/i }).click()
+    await expect(page.locator('#shemitah')).toBeVisible({ timeout: 15_000 })
+
+    await page.getByRole('button', { name: /Historical Event Indicators/i }).click()
+    await expect(page.getByText(/Historical Event Indicators/i).first()).toBeVisible()
+    await page.getByRole('button', { name: /When to Invest/i }).click()
+    await expect(page.getByText(/When to Invest/i).first()).toBeVisible()
+  })
+
+  test('hash deep-link opens portfolio section', async ({ page }) => {
+    await page.setViewportSize({ width: 1400, height: 900 })
+    await page.goto('/#portfolio')
+    await expect(
+      page.getByRole('heading', { name: 'Live Portfolio', exact: true }),
+    ).toBeVisible({ timeout: 20_000 })
+    await expect(page.locator('#portfolio-tracker')).toBeVisible()
+  })
+
+  test('watchlist jumps: BTC, ETH, ADA', async ({ page }) => {
+    await page.setViewportSize({ width: 1400, height: 900 })
+    await page.goto('/')
+    const side = page.getByRole('navigation', { name: 'Sidebar' })
+
+    await side.getByRole('button', { name: /BTC\/USD/i }).click()
+    await expect(page.locator('#asset-btc-usd')).toBeInViewport({ timeout: 15_000 })
+
+    await side.getByRole('button', { name: /ETH\/USD/i }).click()
+    await expect(page.locator('#asset-eth-usd')).toBeInViewport({ timeout: 15_000 })
+
+    await side.getByRole('button', { name: /ADA\/USD/i }).click()
+    await expect(page.locator('#asset-ada-usd')).toBeInViewport({ timeout: 15_000 })
+  })
+})

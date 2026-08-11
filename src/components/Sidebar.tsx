@@ -122,7 +122,11 @@ export function Sidebar({
   wsLive = false,
 }: Props) {
   const { custom } = useCustomCrypto()
-  const allAssets = useMemo(() => getAllAssets(), [custom])
+  // Recompute when user-added coins change (getAllAssets reads storage).
+  const allAssets = useMemo(() => {
+    void custom.length
+    return getAllAssets()
+  }, [custom])
 
   return (
     <>

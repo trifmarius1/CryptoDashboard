@@ -4,6 +4,7 @@ import { ASSETS } from '../constants/assets'
 import { useCustomCrypto } from '../hooks/useCustomCrypto'
 import {
   coinToAsset,
+  fetchBinanceUsdtCatalog,
   type BinanceUsdtCoin,
 } from '../services/customCrypto'
 
@@ -31,7 +32,6 @@ export function AddCryptoModal({ open, onClose, onAdded }: Props) {
     setError(null)
     void (async () => {
       try {
-        const { fetchBinanceUsdtCatalog } = await import('../services/customCrypto')
         const list = await fetchBinanceUsdtCatalog()
         if (!cancelled) setCatalog(list)
       } catch (e) {
@@ -106,18 +106,20 @@ export function AddCryptoModal({ open, onClose, onAdded }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center"
+      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/65 backdrop-blur-sm animate-fade-in sm:items-center"
       role="dialog"
       aria-modal="true"
       aria-labelledby="add-crypto-title"
+      data-testid="add-crypto-dialog"
+      onClick={(e) => {
+        // Click dimmed backdrop (outside panel) closes the modal
+        if (e.target === e.currentTarget) onClose()
+      }}
     >
-      <button
-        type="button"
-        className="absolute inset-0 bg-black/65 backdrop-blur-sm animate-fade-in"
-        aria-label="Close dialog"
-        onClick={onClose}
-      />
-      <div className="relative z-[1] flex max-h-[min(85dvh,640px)] w-full max-w-lg flex-col rounded-t-2xl border border-border/70 bg-surface-card shadow-card sm:rounded-2xl animate-fade-up">
+      <div
+        className="relative z-[1] flex max-h-[min(85dvh,640px)] w-full max-w-lg flex-col rounded-t-2xl border border-border/70 bg-surface-card shadow-card sm:rounded-2xl animate-fade-up"
+        onClick={(e) => e.stopPropagation()}
+      >
         <header className="flex items-start justify-between gap-3 border-b border-border/50 px-4 py-3">
           <div>
             <h2 id="add-crypto-title" className="text-base font-extrabold text-slate-50">
@@ -132,6 +134,7 @@ export function AddCryptoModal({ open, onClose, onAdded }: Props) {
             onClick={onClose}
             className="pressable min-h-10 min-w-10 rounded-lg text-muted hover:bg-white/5 hover:text-slate-100"
             aria-label="Close"
+            data-testid="add-crypto-close"
           >
             ×
           </button>
