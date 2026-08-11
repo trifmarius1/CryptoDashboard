@@ -34,14 +34,16 @@ import { loadCandles, saveCandles } from './cache'
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-const BINANCE_REST = '/api/binance'
+/** Dev uses Vite proxy; production (GitHub Pages) hits public APIs directly. */
+const DEV = import.meta.env.DEV
+const BINANCE_REST = DEV ? '/api/binance' : 'https://api.binance.com'
 const BINANCE_REST_DIRECT = 'https://api.binance.com'
-const COINGECKO = '/api/coingecko'
-const COINPAPRIKA = '/api/coinpaprika'
-const COINLORE = '/api/coinlore'
-const YAHOO = '/api/yahoo'
-const CRYPTOCOMPARE = '/api/cryptocompare'
-const FNG = '/api/fng'
+const COINGECKO = DEV ? '/api/coingecko' : 'https://api.coingecko.com'
+const COINPAPRIKA = DEV ? '/api/coinpaprika' : 'https://api.coinpaprika.com'
+const COINLORE = DEV ? '/api/coinlore' : 'https://api.coinlore.net'
+const YAHOO = DEV ? '/api/yahoo' : 'https://query1.finance.yahoo.com'
+const CRYPTOCOMPARE = DEV ? '/api/cryptocompare' : 'https://min-api.cryptocompare.com'
+const FNG = DEV ? '/api/fng' : 'https://api.alternative.me'
 
 /** Short TTL + in-flight coalescing so widgets don't stampede APIs. */
 const JSON_CACHE_TTL_MS = 90_000
