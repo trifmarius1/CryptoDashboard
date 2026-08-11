@@ -33,8 +33,12 @@ function writeLs(c: FxCache) {
   }
 }
 
+const DEV = import.meta.env.DEV
+const FX_BASE = DEV ? '/api/fx' : 'https://api.frankfurter.app'
+const CG_BASE = DEV ? '/api/coingecko' : 'https://api.coingecko.com'
+
 async function fetchFrankfurter(): Promise<FxCache> {
-  const res = await fetch('/api/fx/latest?from=USD&to=EUR', {
+  const res = await fetch(`${FX_BASE}/latest?from=USD&to=EUR`, {
     headers: { Accept: 'application/json' },
   })
   if (!res.ok) throw new Error(`FX HTTP ${res.status}`)
@@ -46,7 +50,7 @@ async function fetchFrankfurter(): Promise<FxCache> {
 
 async function fetchCoinGeckoFx(): Promise<FxCache> {
   const res = await fetch(
-    '/api/coingecko/api/v3/simple/price?ids=tether&vs_currencies=usd,eur',
+    `${CG_BASE}/api/v3/simple/price?ids=tether&vs_currencies=usd,eur`,
     { headers: { Accept: 'application/json' } },
   )
   if (!res.ok) throw new Error(`CG FX HTTP ${res.status}`)
