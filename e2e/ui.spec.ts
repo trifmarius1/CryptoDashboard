@@ -98,6 +98,24 @@ test.describe('Charts & timeframes', () => {
     await expect(card.locator('canvas').first()).toBeVisible({ timeout: 45_000 })
   })
 
+  test('ETH, TOTAL, and ETH/BTC cards render canvases', async ({ page }) => {
+    await page.goto('/')
+    for (const id of ['#asset-eth-usd', '#asset-total', '#asset-eth-btc']) {
+      const card = page.locator(id)
+      await card.scrollIntoViewIfNeeded()
+      await expect(card).toBeVisible({ timeout: 30_000 })
+      await expect(card.locator('canvas').first()).toBeVisible({ timeout: 45_000 })
+    }
+  })
+
+  test('watchlist jump opens asset from sidebar', async ({ page }) => {
+    await page.setViewportSize({ width: 1400, height: 900 })
+    await page.goto('/')
+    const side = page.getByRole('navigation', { name: 'Sidebar' })
+    await side.getByRole('button', { name: /SOL\/USD/i }).click()
+    await expect(page.locator('#asset-sol-usd')).toBeInViewport({ timeout: 15_000 })
+  })
+
   test('timeframe hours 1-8 selectable on a chart', async ({ page }) => {
     await page.goto('/')
     const btc = page.locator('#asset-btc-usd')

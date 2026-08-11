@@ -74,4 +74,24 @@ test.describe('Market data APIs', () => {
     const body = (await res.json()) as { daily: Array<{ close: number }> }
     expect(body.daily.length).toBeGreaterThan(100)
   })
+
+  test('Binance SOL and ETHBTC klines work', async ({ request }) => {
+    for (const symbol of ['SOLUSDT', 'ETHBTC']) {
+      const res = await request.get(
+        `/api/binance/api/v3/klines?symbol=${symbol}&interval=1d&limit=3`,
+      )
+      expect(res.ok(), symbol).toBeTruthy()
+      const data = (await res.json()) as unknown[][]
+      expect(data.length).toBeGreaterThanOrEqual(1)
+    }
+  })
+
+  test('CoinLore remains healthy global backup', async ({ request }) => {
+    // CoinPaprika free tier returns 402 — CoinLore is the free global backup
+    const res = await request.get('/api/coinlore/api/global/')
+    expect(res.ok()).toBeTruthy()
+    const arr = (await res.json()) as Array<{ total_mcap: number; eth_d: string }>
+    expect(arr[0].total_mcap).toBeGreaterThan(1e11)
+    expect(Number(arr[0].eth_d)).toBeGreaterThan(1)
+  })
 })

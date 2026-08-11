@@ -3,7 +3,7 @@
  *
  * Speed-first multi-tier strategy:
  *   Tier 1 — WebSocket primary (Binance streams)
- *   Tier 2 — Fast REST (Binance klines + CoinLore/Paprika global race)
+ *   Tier 2 — Fast REST (Binance klines + CoinLore global race)
  *   Tier 3 — Yahoo (equity) / CryptoCompare fallback
  *   Aggregates — shared Binance base for BTC.D/TOTAL/TOTAL2/TOTAL3 (one pull)
  *   Cache — in-memory (90s) → IndexedDB (stale-while-revalidate) → synthetic
@@ -39,7 +39,6 @@ const DEV = import.meta.env.DEV
 const BINANCE_REST = DEV ? '/api/binance' : 'https://api.binance.com'
 const BINANCE_REST_DIRECT = 'https://api.binance.com'
 const COINGECKO = DEV ? '/api/coingecko' : 'https://api.coingecko.com'
-const COINPAPRIKA = DEV ? '/api/coinpaprika' : 'https://api.coinpaprika.com'
 const COINLORE = DEV ? '/api/coinlore' : 'https://api.coinlore.net'
 const YAHOO = DEV ? '/api/yahoo' : 'https://query1.finance.yahoo.com'
 const CRYPTOCOMPARE = DEV ? '/api/cryptocompare' : 'https://min-api.cryptocompare.com'
@@ -640,46 +639,6 @@ async function fetchGlobalFromCoinGecko(): Promise<GlobalSnapshot> {
   }
 }
 
-async function fetchGlobalFromCoinPaprika(): Promise<GlobalSnapshot> {
-  const d = await fetchJsonCached<{
-    market_cap_usd: number
-    volume_24h_usd: number
-    bitcoin_dominance_percentage: number
-    market_cap_change_24h: number
-  }>(`${COINPAPRIKA}/v1/global`)
-
-  // ETH dominance not on global — fetch tickers for BTC + ETH mcap
-  let btcMcap = d.market_cap_usd * ((d.bitcoin_dominance_percentage || 50) / 100)
-  let ethMcap = d.market_cap_usd * 0.12
-  let ethDom = 12
-  try {
-    const [btc, eth] = await Promise.all([
-      fetchJsonCached<{ quotes: { USD: { market_cap: number } } }>(
-        `${COINPAPRIKA}/v1/tickers/btc-bitcoin`,
-      ),
-      fetchJsonCached<{ quotes: { USD: { market_cap: number } } }>(
-        `${COINPAPRIKA}/v1/tickers/eth-ethereum`,
-      ),
-    ])
-    btcMcap = btc.quotes.USD.market_cap
-    ethMcap = eth.quotes.USD.market_cap
-    ethDom = d.market_cap_usd > 0 ? (ethMcap / d.market_cap_usd) * 100 : 12
-  } catch {
-    /* keep estimates */
-  }
-
-  return {
-    totalMarketCap: d.market_cap_usd,
-    totalVolume24h: d.volume_24h_usd,
-    btcDominance: d.bitcoin_dominance_percentage,
-    ethDominance: ethDom,
-    btcMarketCap: btcMcap,
-    ethMarketCap: ethMcap,
-    marketCapChange24h: d.market_cap_change_24h ?? 0,
-    source: 'CoinPaprika',
-  }
-}
-
 async function fetchGlobalFromCoinLore(): Promise<GlobalSnapshot> {
   const [globalArr, tickers] = await Promise.all([
     fetchJsonCached<
@@ -719,7 +678,7 @@ async function fetchGlobalFromCoinLore(): Promise<GlobalSnapshot> {
 
 /**
  * Race global providers — first healthy response wins.
- * Prefers fast free APIs (CoinLore / Paprika); CoinGecko included in parallel.
+ * Prefers fast free APIs (CoinLore); CoinGecko included in parallel.
  */
 async function fetchGlobalSnapshot(): Promise<GlobalSnapshot> {
   const cacheKey = '__global_snapshot__'
@@ -731,10 +690,9 @@ async function fetchGlobalSnapshot(): Promise<GlobalSnapshot> {
   if (pending) return pending as Promise<GlobalSnapshot>
 
   const promise = (async () => {
-    // Fast providers first in Promise.any; CoinGecko may be slower/rate-limited
+    // CoinLore first (reliable free); CoinGecko parallel.
     const candidates = [
       fetchGlobalFromCoinLore(),
-      fetchGlobalFromCoinPaprika(),
       fetchGlobalFromCoinGecko(),
     ].map((p) =>
       p.then((snap) => {
