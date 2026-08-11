@@ -55,6 +55,31 @@ Toggle **Shemitah** on BTC / SPX multi-year charts to paint 7-year sabbatical ba
 | `npm run build`| Production build         |
 | `npm run preview` | Preview production    |
 
+## Free online deploy (Vercel)
+
+This app is a static SPA. Market APIs are proxied in production via `vercel.json` (same routes as local Vite).
+
+1. Open [vercel.com](https://vercel.com) and sign in with **GitHub** (free Hobby plan).
+2. **Add New Project** → import `trifmarius1/CryptoDashboard`.
+3. Leave defaults:
+   - Framework: Vite  
+   - Build: `npm run build`  
+   - Output: `dist`
+4. Click **Deploy**.
+
+You get a free HTTPS URL like `https://crypto-dashboard-….vercel.app`.  
+Every push to `master` redeploys automatically.
+
+Optional: add a custom domain under Project → Settings → Domains (free on Hobby).
+
+### Other free options
+
+| Host | Notes |
+|------|--------|
+| **Netlify** | Same idea; add redirect/proxy rules for `/api/*` |
+| **Cloudflare Pages** | Free CDN; use Workers for API proxy if needed |
+| **GitHub Pages** | Free static only — **not recommended** without rewriting API calls (CORS) |
+
 ## Disclaimer
 
 Not financial advice. Market data may be delayed. Shemitah metrics are historical-cycle / educational overlays for research and backtesting context only.
