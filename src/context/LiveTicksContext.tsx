@@ -6,7 +6,8 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import { ASSETS } from '../constants/assets'
+import { getAllAssets } from '../services/assetRegistry'
+import { CUSTOM_CRYPTO_EVENT } from '../services/customCrypto'
 import { subscribeBinanceTicks } from '../services/financialApi'
 
 interface LiveTicksContextValue {
@@ -17,15 +18,34 @@ interface LiveTicksContextValue {
 
 const LiveTicksContext = createContext<LiveTicksContextValue | null>(null)
 
-/** Single shared Binance WS subscription for the whole app. */
+function binanceSymbols(): string[] {
+  return getAllAssets()
+    .map((a) => a.binanceSymbol)
+    .filter((s): s is string => Boolean(s))
+}
+
+/** Shared Binance WS subscription — resubscribes when custom coins change. */
 export function LiveTicksProvider({ children }: { children: ReactNode }) {
   const [prices, setPrices] = useState<Record<string, number>>({})
   const [wsLive, setWsLive] = useState(false)
+  const [symbolKey, setSymbolKey] = useState(() => binanceSymbols().join(','))
 
   useEffect(() => {
-    const symbols = ASSETS.map((a) => a.binanceSymbol).filter(
-      (s): s is string => Boolean(s),
-    )
+    const refresh = () => setSymbolKey(binanceSymbols().join(','))
+    window.addEventListener(CUSTOM_CRYPTO_EVENT, refresh)
+    window.addEventListener('storage', refresh)
+    return () => {
+      window.removeEventListener(CUSTOM_CRYPTO_EVENT, refresh)
+      window.removeEventListener('storage', refresh)
+    }
+  }, [])
+
+  useEffect(() => {
+    const symbols = symbolKey ? symbolKey.split(',').filter(Boolean) : []
+    if (!symbols.length) {
+      setWsLive(false)
+      return
+    }
     return subscribeBinanceTicks(
       symbols,
       ({ symbol, price }) => {
@@ -36,14 +56,14 @@ export function LiveTicksProvider({ children }: { children: ReactNode }) {
       },
       setWsLive,
     )
-  }, [])
+  }, [symbolKey])
 
   const value = useMemo<LiveTicksContextValue>(
     () => ({
       prices,
       wsLive,
       getLivePrice: (assetId: string) => {
-        const asset = ASSETS.find((a) => a.id === assetId)
+        const asset = getAllAssets().find((a) => a.id === assetId)
         if (!asset?.binanceSymbol) return undefined
         return prices[asset.binanceSymbol]
       },

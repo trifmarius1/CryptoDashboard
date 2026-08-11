@@ -72,6 +72,25 @@ test.describe('Charts & timeframes', () => {
     await expect(btc.locator('canvas').first()).toBeVisible({ timeout: 30_000 })
   })
 
+  test('Add crypto opens catalog and can add a coin', async ({ page }) => {
+    await page.goto('/')
+    await page.getByRole('button', { name: /Add crypto/i }).click()
+    const dialog = page.getByRole('dialog')
+    await expect(dialog).toBeVisible()
+    await expect(page.getByRole('heading', { name: /Add crypto asset/i })).toBeVisible()
+    // Wait for catalog finished loading
+    await expect(page.getByText(/\d[\d,]* USDT pairs/i)).toBeVisible({ timeout: 60_000 })
+    await page.getByPlaceholder(/Search/i).fill('DOGE')
+    const dogeAdd = page.getByTestId('add-coin-DOGE')
+    await expect(dogeAdd).toBeVisible({ timeout: 15_000 })
+    await dogeAdd.click()
+    await expect(dialog).toBeHidden({ timeout: 10_000 })
+    const dogeCard = page.locator('#asset-crypto-doge-usd')
+    await dogeCard.scrollIntoViewIfNeeded()
+    await expect(dogeCard).toBeVisible({ timeout: 20_000 })
+    await expect(dogeCard.locator('canvas').first()).toBeVisible({ timeout: 45_000 })
+  })
+
   test('SPX equity card shows chart canvas', async ({ page }) => {
     await page.goto('/')
     const spx = page.locator('#asset-spx')

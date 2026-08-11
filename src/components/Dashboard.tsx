@@ -1,6 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ASSETS, SECTION_META } from '../constants/assets'
 import type { AssetCategory, NavSection } from '../types'
+import { useCustomCrypto } from '../hooks/useCustomCrypto'
+import { useLiveTicks } from '../hooks/useLiveTicks'
+import { isCoreCryptoId } from '../services/customCrypto'
+import { AddCryptoModal } from './AddCryptoModal'
 import { AssetCard } from './AssetCard'
 import { BrandLogo } from './BrandLogo'
 import { HeaderTicker } from './HeaderTicker'
@@ -8,7 +12,6 @@ import { MobileNav } from './MobileNav'
 import { PortfolioTracker } from './PortfolioTracker'
 import { ShemitahWidget } from './ShemitahWidget'
 import { Sidebar } from './Sidebar'
-import { useLiveTicks } from '../hooks/useLiveTicks'
 
 const SECTION_ORDER: AssetCategory[] = [
   'crypto',
@@ -21,7 +24,9 @@ const SECTION_ORDER: AssetCategory[] = [
 export function Dashboard() {
   const [section, setSection] = useState<NavSection>('dashboard')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [addCryptoOpen, setAddCryptoOpen] = useState(false)
   const { wsLive } = useLiveTicks()
+  const { custom, remove: removeCustom } = useCustomCrypto()
 
   const scrollToAsset = useCallback((assetId: string) => {
     requestAnimationFrame(() => {
@@ -73,12 +78,16 @@ export function Dashboard() {
   }, [])
 
   const grouped = useMemo(() => {
-    return SECTION_ORDER.map((cat) => ({
-      cat,
-      meta: SECTION_META[cat],
-      assets: ASSETS.filter((a) => a.category === cat),
-    })).filter((g) => g.assets.length)
-  }, [])
+    return SECTION_ORDER.map((cat) => {
+      const core = ASSETS.filter((a) => a.category === cat)
+      const extras = cat === 'crypto' ? custom : []
+      return {
+        cat,
+        meta: SECTION_META[cat],
+        assets: [...core, ...extras],
+      }
+    }).filter((g) => g.assets.length)
+  }, [custom])
 
   const sectionTitle: Record<NavSection, { title: string; subtitle: string }> = {
     dashboard: {
@@ -225,9 +234,23 @@ export function Dashboard() {
                             {meta.subtitle}
                           </p>
                         </div>
-                        <span className="rounded-full bg-white/[0.04] px-2.5 py-1 font-mono text-[10px] font-semibold text-muted ring-1 ring-border/50">
-                          {assets.length} widgets
-                        </span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          {cat === 'crypto' && section === 'dashboard' && (
+                            <button
+                              type="button"
+                              onClick={() => setAddCryptoOpen(true)}
+                              className="pressable inline-flex min-h-10 items-center gap-1.5 rounded-full bg-accent/15 px-3 text-xs font-bold text-accent ring-1 ring-accent/35 hover:bg-accent/25"
+                            >
+                              <span className="text-base leading-none" aria-hidden>
+                                +
+                              </span>
+                              Add crypto
+                            </button>
+                          )}
+                          <span className="rounded-full bg-white/[0.04] px-2.5 py-1 font-mono text-[10px] font-semibold text-muted ring-1 ring-border/50">
+                            {assets.length} widgets
+                          </span>
+                        </div>
                       </div>
 
                       <div
@@ -249,6 +272,11 @@ export function Dashboard() {
                               cat === 'pair' ||
                               cat === 'aggregate' ||
                               cat === 'macro'
+                            }
+                            onRemove={
+                              cat === 'crypto' && !isCoreCryptoId(asset.id)
+                                ? () => removeCustom(asset.id)
+                                : undefined
                             }
                           />
                         ))}
@@ -275,6 +303,15 @@ export function Dashboard() {
       </div>
 
       <MobileNav active={section} onChange={(s) => navigate(s)} />
+
+      <AddCryptoModal
+        open={addCryptoOpen}
+        onClose={() => setAddCryptoOpen(false)}
+        onAdded={(assetId) => {
+          setSection('dashboard')
+          setTimeout(() => scrollToAsset(assetId), 80)
+        }}
+      />
     </div>
   )
 }

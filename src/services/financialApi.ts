@@ -15,7 +15,6 @@
  * All public methods normalize to Candle[] / AssetQuote / MarketOverview.
  */
 import {
-  ASSETS,
   BINANCE_INTERVAL_MAP,
   fearGreedLimit,
   parseTimeframe,
@@ -30,6 +29,7 @@ import type {
   MarketOverview,
   Timeframe,
 } from '../types'
+import { requireAssetById } from './assetRegistry'
 import { loadCandles, saveCandles } from './cache'
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -57,9 +57,7 @@ const candleMemCache = new Map<string, { at: number; result: { candles: Candle[]
 const candleInflight = new Map<string, Promise<{ candles: Candle[]; status: FeedStatus }>>()
 
 function assetById(id: string): AssetDefinition {
-  const a = ASSETS.find((x) => x.id === id)
-  if (!a) throw new Error(`Unknown asset: ${id}`)
-  return a
+  return requireAssetById(id)
 }
 
 function candleKey(assetId: string, timeframe: Timeframe): string {

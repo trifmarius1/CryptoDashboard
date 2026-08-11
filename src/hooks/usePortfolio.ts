@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQueries } from '@tanstack/react-query'
-import { ASSETS } from '../constants/assets'
+import { getAllAssets } from '../services/assetRegistry'
 import { useLiveTicks } from './useLiveTicks'
 import { fetchQuote } from '../services/financialApi'
 import { getUsdToEurRate, convertUsd } from '../services/fxRates'
@@ -18,13 +18,15 @@ import type {
   PortfolioState,
 } from '../types'
 
-/** Assets that can be held & valued in the portfolio. */
-export const PORTFOLIO_ASSETS: AssetDefinition[] = ASSETS.filter(
-  (a) =>
-    a.category === 'crypto' ||
-    a.category === 'equity' ||
-    a.category === 'pair',
-)
+/** Assets that can be held & valued in the portfolio (includes user-added coins). */
+export function getPortfolioAssets(): AssetDefinition[] {
+  return getAllAssets().filter(
+    (a) =>
+      a.category === 'crypto' ||
+      a.category === 'equity' ||
+      a.category === 'pair',
+  )
+}
 
 export interface HoldingValuation {
   holding: PortfolioHolding
@@ -215,8 +217,9 @@ export function usePortfolio() {
     let offline = !wsLive
     const raw: Omit<HoldingValuation, 'allocationPct'>[] = []
 
+    const allAssets = getAllAssets()
     for (const holding of state.holdings) {
-      const asset = ASSETS.find((a) => a.id === holding.assetId)
+      const asset = allAssets.find((a) => a.id === holding.assetId)
       if (!asset) continue
       const live = getLivePrice(holding.assetId)
       const quote = quotesById.get(holding.assetId)
@@ -286,6 +289,6 @@ export function usePortfolio() {
     importJson,
     convertUsd: (usd: number) =>
       convertUsd(usd, state?.currency ?? 'USD', fx.usdToEur),
-    portfolioAssets: PORTFOLIO_ASSETS,
+    portfolioAssets: getPortfolioAssets(),
   }
 }

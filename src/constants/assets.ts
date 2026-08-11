@@ -337,7 +337,7 @@ export function fearGreedLimit(tf: Timeframe): number {
 export const SECTION_META = {
   crypto: {
     title: 'Single Crypto Assets',
-    subtitle: 'USD pairs — real-time & historical',
+    subtitle: 'USD pairs — real-time & historical · add any Binance coin',
   },
   equity: {
     title: 'Traditional Benchmarks',

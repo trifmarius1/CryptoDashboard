@@ -1,6 +1,8 @@
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import clsx from 'clsx'
-import { ASSETS, SECTION_META } from '../constants/assets'
+import { SECTION_META } from '../constants/assets'
+import { useCustomCrypto } from '../hooks/useCustomCrypto'
+import { getAllAssets } from '../services/assetRegistry'
 import type { AssetCategory, NavSection } from '../types'
 import { BrandLogo } from './BrandLogo'
 
@@ -119,6 +121,9 @@ export function Sidebar({
   onClose,
   wsLive = false,
 }: Props) {
+  const { custom } = useCustomCrypto()
+  const allAssets = useMemo(() => getAllAssets(), [custom])
+
   return (
     <>
       {/* Mobile drawer backdrop */}
@@ -246,12 +251,12 @@ export function Sidebar({
               Jump to asset
             </p>
             <span className="rounded-md bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px] text-muted">
-              {ASSETS.length}
+              {allAssets.length}
             </span>
           </div>
 
           {WATCHLIST_ORDER.map((cat) => {
-            const items = ASSETS.filter((a) => a.category === cat)
+            const items = allAssets.filter((a) => a.category === cat)
             if (!items.length) return null
             return (
               <div key={cat} className="mb-3">

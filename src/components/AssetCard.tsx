@@ -15,6 +15,8 @@ interface Props {
   compact?: boolean
   /** Optional DOM id suffix to avoid duplicate ids when the same asset is rendered twice. */
   idSuffix?: string
+  /** Show remove control (user-added coins). */
+  onRemove?: () => void
 }
 
 export function AssetCard({
@@ -23,6 +25,7 @@ export function AssetCard({
   shemitahCapable = false,
   compact = false,
   idSuffix = '',
+  onRemove,
 }: Props) {
   const [timeframe, setTimeframe] = useState<Timeframe>(defaultTimeframe)
   const [shemitahOn, setShemitahOn] = useState(false)
@@ -68,9 +71,22 @@ export function AssetCard({
         </div>
 
         <div className="flex flex-col items-end gap-1">
-          <span className="font-mono text-xl font-bold tabular-nums tracking-tight text-slate-50 sm:text-2xl">
-            {priceLabel}
-          </span>
+          <div className="flex items-center gap-1.5">
+            {onRemove && (
+              <button
+                type="button"
+                onClick={onRemove}
+                className="pressable min-h-9 min-w-9 rounded-lg text-muted hover:bg-bearish/10 hover:text-bearish"
+                aria-label={`Remove ${asset.symbol} from dashboard`}
+                title="Remove from dashboard"
+              >
+                ×
+              </button>
+            )}
+            <span className="font-mono text-xl font-bold tabular-nums tracking-tight text-slate-50 sm:text-2xl">
+              {priceLabel}
+            </span>
+          </div>
           <MetricBadge value={changePct} />
         </div>
       </header>

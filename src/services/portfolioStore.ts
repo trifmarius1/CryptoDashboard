@@ -4,15 +4,18 @@
  * Input is strictly allow-listed to reduce XSS / prototype-pollution risk.
  */
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb'
-import { ASSETS } from '../constants/assets'
 import type { PortfolioHolding, PortfolioState } from '../types'
+import { getAllAssets } from './assetRegistry'
 
 const LS_KEY = 'cryptomacro-portfolio-v1'
 const DB_NAME = 'cryptomacro-portfolio'
 const DB_VERSION = 1
 const STORE = 'state'
 const MAX_HOLDINGS = 50
-const ALLOWED_ASSET_IDS = new Set(ASSETS.map((a) => a.id))
+
+function allowedAssetIds(): Set<string> {
+  return new Set(getAllAssets().map((a) => a.id))
+}
 
 interface PortfolioDB extends DBSchema {
   state: {
@@ -49,7 +52,7 @@ function normalize(raw: unknown): PortfolioState {
     const id = safeId(h.id)
     const assetId = safeId(h.assetId)
     const amount = typeof h.amount === 'number' ? h.amount : Number(h.amount)
-    if (!id || !assetId || !ALLOWED_ASSET_IDS.has(assetId)) continue
+    if (!id || !assetId || !allowedAssetIds().has(assetId)) continue
     if (!Number.isFinite(amount) || amount <= 0 || amount > 1e15) continue
     let avgBuyPriceUsd: number | undefined
     if (h.avgBuyPriceUsd != null) {
