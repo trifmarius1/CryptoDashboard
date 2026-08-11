@@ -334,7 +334,8 @@ export function InteractiveChart({
     const events = getEventMarkers().filter((e) => e.time >= from && e.time <= to)
 
     const render = () => {
-      layer.innerHTML = ''
+      // Safer than innerHTML = '' when clearing overlay nodes
+      while (layer.firstChild) layer.removeChild(layer.firstChild)
       const ts = chart.timeScale()
 
       for (const band of bands) {

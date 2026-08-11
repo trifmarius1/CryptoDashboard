@@ -13,6 +13,8 @@ interface Props {
   defaultTimeframe?: Timeframe
   shemitahCapable?: boolean
   compact?: boolean
+  /** Optional DOM id suffix to avoid duplicate ids when the same asset is rendered twice. */
+  idSuffix?: string
 }
 
 export function AssetCard({
@@ -20,6 +22,7 @@ export function AssetCard({
   defaultTimeframe = '1Y',
   shemitahCapable = false,
   compact = false,
+  idSuffix = '',
 }: Props) {
   const [timeframe, setTimeframe] = useState<Timeframe>(defaultTimeframe)
   const [shemitahOn, setShemitahOn] = useState(false)
@@ -38,7 +41,7 @@ export function AssetCard({
 
   return (
     <article
-      id={`asset-${asset.id}`}
+      id={`asset-${asset.id}${idSuffix ? `-${idSuffix}` : ''}`}
       className="@container rounded-2xl border border-border/70 bg-surface-card/90 p-3 shadow-card backdrop-blur-sm sm:p-4"
       style={{ contentVisibility: 'auto', containIntrinsicSize: '0 420px' }}
     >

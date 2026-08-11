@@ -104,8 +104,8 @@ export function ShemitahWidget() {
 
       {/* Dual charts with Shemitah overlay capability */}
       <div className="grid gap-4 lg:grid-cols-2">
-        <AssetCard asset={spx} defaultTimeframe="1Y" shemitahCapable />
-        <AssetCard asset={btc} defaultTimeframe="1Y" shemitahCapable />
+        <AssetCard asset={spx} defaultTimeframe="1Y" shemitahCapable idSuffix="shemitah" />
+        <AssetCard asset={btc} defaultTimeframe="1Y" shemitahCapable idSuffix="shemitah" />
       </div>
 
       {/* Intelligence panel */}

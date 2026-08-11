@@ -1329,15 +1329,21 @@ export function subscribeBinanceTicks(
 
     ws.onmessage = (ev) => {
       try {
-        const msg = JSON.parse(ev.data as string) as {
-          data?: { s: string; c: string; E: number }
+        if (typeof ev.data !== 'string' || ev.data.length > 50_000) return
+        const msg = JSON.parse(ev.data) as {
+          data?: { s?: unknown; c?: unknown; E?: unknown }
         }
         const d = msg.data
-        if (!d?.s || !d.c) return
+        if (!d || typeof d.s !== 'string' || typeof d.c !== 'string') return
+        // Only symbols we subscribed to
+        if (!symbols.includes(d.s)) return
+        const price = Number(d.c)
+        if (!Number.isFinite(price) || price <= 0) return
+        const eventMs = typeof d.E === 'number' ? d.E : Date.now()
         onTick({
           symbol: d.s,
-          price: Number(d.c),
-          time: Math.floor((d.E || Date.now()) / 1000),
+          price,
+          time: Math.floor(eventMs / 1000),
         })
       } catch {
         /* ignore malformed */
