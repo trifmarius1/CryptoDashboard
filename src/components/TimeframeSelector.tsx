@@ -58,9 +58,9 @@ export function TimeframeSelector({ value, onChange, className }: Props) {
               aria-selected={active}
               onClick={() => selectUnit(g.unit)}
               className={clsx(
-                'min-h-9 touch-manipulation rounded-lg px-2.5 text-[11px] font-bold tracking-wide transition-colors sm:min-h-10 sm:px-3 sm:text-xs',
+                'pressable min-h-9 touch-manipulation rounded-lg px-2.5 text-[11px] font-bold tracking-wide sm:min-h-10 sm:px-3 sm:text-xs',
                 active
-                  ? 'bg-accent/20 text-accent shadow-sm ring-1 ring-accent/40'
+                  ? 'bg-accent/20 text-accent shadow-sm ring-1 ring-accent/40 shadow-glow'
                   : 'text-muted hover:bg-white/5 hover:text-slate-100',
               )}
             >
@@ -100,7 +100,7 @@ export function TimeframeSelector({ value, onChange, className }: Props) {
                 aria-selected={active}
                 onClick={() => onChange(opt.id)}
                 className={clsx(
-                  'min-h-9 min-w-9 touch-manipulation rounded-lg px-2 text-xs font-bold tabular-nums transition-colors sm:min-h-10 sm:min-w-10 sm:text-[13px]',
+                  'pressable min-h-9 min-w-9 touch-manipulation rounded-lg px-2 text-xs font-bold tabular-nums sm:min-h-10 sm:min-w-10 sm:text-[13px]',
                   active
                     ? 'bg-white/10 text-slate-50 ring-1 ring-accent/50'
                     : 'text-muted hover:bg-white/5 hover:text-slate-100',

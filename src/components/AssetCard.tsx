@@ -42,7 +42,7 @@ export function AssetCard({
   return (
     <article
       id={`asset-${asset.id}${idSuffix ? `-${idSuffix}` : ''}`}
-      className="@container rounded-2xl border border-border/70 bg-surface-card/90 p-3 shadow-card backdrop-blur-sm sm:p-4"
+      className="card-lift @container rounded-2xl border border-border/70 bg-surface-card/90 p-3 shadow-card backdrop-blur-md sm:p-4"
       style={{ contentVisibility: 'auto', containIntrinsicSize: '0 420px' }}
     >
       <header className="mb-3 flex flex-wrap items-start justify-between gap-2">

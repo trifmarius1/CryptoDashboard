@@ -36,7 +36,7 @@ function TickerChip({
 
   return (
     <div
-      className={`flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 ring-1 ${toneRing}`}
+      className={`pressable flex shrink-0 items-center gap-2.5 rounded-xl px-3 py-2 ring-1 transition-all duration-300 hover:brightness-110 ${toneRing}`}
     >
       <span
         className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconTone}`}

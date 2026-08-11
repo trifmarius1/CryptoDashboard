@@ -358,9 +358,9 @@ export const SECTION_META = {
 } as const
 
 export const COLORS = {
-  surface: '#080B14',
-  surfaceElevated: '#0E1422',
-  surfaceCard: '#121A2B',
+  surface: '#060912',
+  surfaceElevated: '#0C1220',
+  surfaceCard: '#10182A',
   border: '#243049',
   bullish: '#34D399',
   bearish: '#FB7185',

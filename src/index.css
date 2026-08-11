@@ -1,10 +1,10 @@
 @import 'tailwindcss';
 
-/* ── Design tokens — modern ink / teal fintech ───────────────────── */
+/* ── Design tokens — visionary ink / teal fintech ─────────────────── */
 @theme {
-  --color-surface: #080b14;
-  --color-surface-elevated: #0e1422;
-  --color-surface-card: #121a2b;
+  --color-surface: #060912;
+  --color-surface-elevated: #0c1220;
+  --color-surface-card: #10182a;
   --color-border: #243049;
   --color-bullish: #34d399;
   --color-bearish: #fb7185;
@@ -12,17 +12,21 @@
   --color-accent: #2dd4bf;
   --color-accent-soft: #38bdf8;
   --color-muted: #8b9bb4;
-  --color-sidebar: #0a101c;
+  --color-sidebar: #080e1a;
+  --color-glow: #22d3ee;
 
   --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system,
     sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.05) inset,
-    0 12px 32px rgba(0, 0, 0, 0.4);
-  --shadow-nav: 4px 0 24px rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 1px 0 rgba(255, 255, 255, 0.06) inset,
+    0 12px 40px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(45, 212, 191, 0.04);
+  --shadow-nav: 4px 0 32px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 24px rgba(45, 212, 191, 0.18);
 
-  /* Fluid type scale via clamp() */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
   --text-fluid-sm: clamp(0.8125rem, 0.75rem + 0.25vw, 0.9375rem);
   --text-fluid-base: clamp(0.9375rem, 0.875rem + 0.3vw, 1.0625rem);
   --text-fluid-lg: clamp(1.125rem, 1rem + 0.6vw, 1.375rem);
@@ -30,7 +34,6 @@
   --text-fluid-2xl: clamp(1.6rem, 1.3rem + 1.2vw, 2.25rem);
 }
 
-/* Map custom text sizes */
 @utility text-fluid-sm {
   font-size: var(--text-fluid-sm);
 }
@@ -68,9 +71,12 @@ body {
   font-size: var(--text-fluid-base);
   line-height: 1.5;
   background-color: var(--color-surface);
+  /* Mesh / aurora atmosphere — calm focus (fintech trust + depth) */
   background-image:
-    radial-gradient(ellipse 80% 50% at 0% -20%, rgba(45, 212, 191, 0.08), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(56, 189, 248, 0.06), transparent);
+    radial-gradient(ellipse 90% 55% at 0% -10%, rgba(45, 212, 191, 0.12), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 100% 0%, rgba(56, 189, 248, 0.1), transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 100%, rgba(139, 92, 246, 0.06), transparent 55%),
+    linear-gradient(180deg, #060912 0%, #080c16 40%, #060912 100%);
   background-attachment: fixed;
   color: #e8eef8;
   -webkit-font-smoothing: antialiased;
@@ -82,7 +88,6 @@ body {
   min-height: 100dvh;
 }
 
-/* Reduce CLS: reserve space for media / charts */
 img,
 canvas,
 svg {
@@ -90,7 +95,6 @@ svg {
   display: block;
 }
 
-/* Touch target helper */
 .touch-manipulation {
   touch-action: manipulation;
 }
@@ -112,7 +116,6 @@ svg {
   background: #3a4a68;
 }
 
-/* Sidebar scrollbar */
 .sidebar-scroll {
   scrollbar-width: thin;
   scrollbar-color: #243049 transparent;
@@ -125,26 +128,194 @@ svg {
   border-radius: 99px;
 }
 
-/* Focus visibility (a11y) */
 :focus-visible {
   outline: 2px solid color-mix(in srgb, var(--color-accent) 75%, white);
   outline-offset: 2px;
 }
 
-/* Selection */
 ::selection {
   background: color-mix(in srgb, var(--color-accent) 35%, transparent);
   color: white;
 }
 
-/* Safe-area padding utility for notched phones */
 .pb-safe {
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
 /* Soft glass panels */
 .glass-panel {
-  background: color-mix(in srgb, var(--color-surface-elevated) 88%, transparent);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: color-mix(in srgb, var(--color-surface-elevated) 82%, transparent);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+}
+
+/* ── Motion system (psychology: feedback, not distraction) ───────── */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.35);
+  }
+  50% {
+    opacity: 0.85;
+    box-shadow: 0 0 0 6px rgba(45, 212, 191, 0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes float-glow {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(-6px);
+    opacity: 0.85;
+  }
+}
+
+@keyframes nav-indicator {
+  from {
+    transform: scaleY(0.4);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.45s var(--ease-out-expo) both;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.35s var(--ease-out-expo) both;
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 2.4s ease-in-out infinite;
+}
+
+.stagger-1 {
+  animation-delay: 0.04s;
+}
+.stagger-2 {
+  animation-delay: 0.08s;
+}
+.stagger-3 {
+  animation-delay: 0.12s;
+}
+.stagger-4 {
+  animation-delay: 0.16s;
+}
+.stagger-5 {
+  animation-delay: 0.2s;
+}
+
+/* Card hover lift — rewards exploration without chaos */
+.card-lift {
+  transition:
+    transform 0.28s var(--ease-out-expo),
+    box-shadow 0.28s var(--ease-out-expo),
+    border-color 0.28s ease,
+    background-color 0.28s ease;
+}
+.card-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-card), 0 16px 48px rgba(0, 0, 0, 0.35),
+    0 0 0 1px rgba(45, 212, 191, 0.12);
+  border-color: color-mix(in srgb, var(--color-accent) 28%, var(--color-border));
+}
+
+/* Interactive press feedback */
+.pressable {
+  transition:
+    transform 0.15s var(--ease-out-expo),
+    background-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.2s ease;
+}
+.pressable:active {
+  transform: scale(0.97);
+}
+
+/* Nav item active rail */
+.nav-active-rail {
+  animation: nav-indicator 0.28s var(--ease-out-expo) both;
+}
+
+/* Page section enter */
+.page-enter {
+  animation: fade-up 0.4s var(--ease-out-expo) both;
+}
+
+/* Ambient orb decoration */
+.ambient-orb {
+  animation: float-glow 8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Skeleton shimmer for loading */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.03) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0.03) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Respect reduced motion (accessibility + calm UX) */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-soft-pulse,
+  .nav-active-rail,
+  .page-enter,
+  .ambient-orb,
+  .skeleton-shimmer {
+    animation: none !important;
+  }
+  .card-lift,
+  .pressable {
+    transition: none !important;
+  }
+  .card-lift:hover {
+    transform: none;
+  }
 }

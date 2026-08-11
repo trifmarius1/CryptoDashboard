@@ -195,7 +195,7 @@ export function PortfolioTracker({ variant = 'page', className }: Props) {
       id="portfolio-tracker"
       aria-label="Live portfolio tracker"
       className={clsx(
-        'flex flex-col gap-4 rounded-2xl border border-border/70 bg-surface-card/95 shadow-card backdrop-blur-sm',
+        'card-lift flex flex-col gap-4 rounded-2xl border border-border/70 bg-surface-card/95 shadow-card backdrop-blur-md',
         isSidebar ? 'p-3' : 'p-3 sm:p-5',
         className,
       )}

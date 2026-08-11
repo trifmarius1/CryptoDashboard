@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { ASSETS, SECTION_META } from '../constants/assets'
 import type { AssetCategory, NavSection } from '../types'
 import { AssetCard } from './AssetCard'
+import { BrandLogo } from './BrandLogo'
 import { HeaderTicker } from './HeaderTicker'
 import { MobileNav } from './MobileNav'
 import { PortfolioTracker } from './PortfolioTracker'
@@ -102,7 +103,18 @@ export function Dashboard() {
   const showMarketFeed = section === 'dashboard' || section === 'macro'
 
   return (
-    <div className="flex min-h-dvh text-slate-100">
+    <div className="relative flex min-h-dvh text-slate-100">
+      {/* Ambient depth orbs — visionary backdrop without cluttering content */}
+      <div
+        className="ambient-orb pointer-events-none fixed left-[20%] top-[12%] h-64 w-64 rounded-full bg-accent/10 blur-3xl"
+        aria-hidden
+      />
+      <div
+        className="ambient-orb pointer-events-none fixed bottom-[10%] right-[8%] h-72 w-72 rounded-full bg-sky-500/10 blur-3xl"
+        style={{ animationDelay: '2.5s' }}
+        aria-hidden
+      />
+
       <Sidebar
         activeSection={section}
         onNavigate={navigate}
@@ -111,12 +123,12 @@ export function Dashboard() {
         wsLive={wsLive}
       />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 border-b border-border/50 bg-surface/80 backdrop-blur-xl">
+      <div className="relative z-[1] flex min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-30 border-b border-border/40 bg-surface/75 backdrop-blur-2xl">
           <div className="flex min-h-14 items-center gap-3 px-3 py-2 sm:px-4 lg:px-6">
             <button
               type="button"
-              className="flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-xl bg-white/[0.03] text-slate-200 ring-1 ring-border/70 transition-colors hover:bg-white/[0.06] lg:hidden"
+              className="pressable flex min-h-11 min-w-11 touch-manipulation items-center justify-center rounded-xl bg-white/[0.04] text-slate-200 ring-1 ring-border/70 hover:bg-white/[0.07] lg:hidden"
               onClick={() => setDrawerOpen(true)}
               aria-label="Open navigation"
             >
@@ -130,13 +142,17 @@ export function Dashboard() {
               </svg>
             </button>
 
-            <div className="min-w-0 flex-1">
+            <div className="hidden items-center lg:flex">
+              <BrandLogo size={32} compact className="mr-3 opacity-90" />
+            </div>
+
+            <div className="min-w-0 flex-1 animate-fade-in" key={section}>
               <div className="flex flex-wrap items-center gap-2">
                 <h1 className="truncate text-[15px] font-extrabold tracking-tight text-slate-50 sm:text-base">
                   {heading.title}
                 </h1>
-                <span className="hidden rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent ring-1 ring-accent/25 sm:inline">
-                  2026
+                <span className="hidden rounded-full bg-gradient-to-r from-accent/15 to-sky-400/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent ring-1 ring-accent/25 sm:inline">
+                  Vision 2026
                 </span>
               </div>
               <p className="hidden truncate text-[12px] font-medium text-muted sm:block">
@@ -148,7 +164,7 @@ export function Dashboard() {
               <button
                 type="button"
                 onClick={() => navigate('portfolio')}
-                className="hidden min-h-10 items-center gap-1.5 rounded-full bg-accent/10 px-3 text-[11px] font-bold text-accent ring-1 ring-accent/30 transition-colors hover:bg-accent/20 md:inline-flex xl:hidden"
+                className="pressable hidden min-h-10 items-center gap-1.5 rounded-full bg-accent/10 px-3 text-[11px] font-bold text-accent ring-1 ring-accent/30 hover:bg-accent/20 md:inline-flex xl:hidden"
               >
                 Portfolio
               </button>
@@ -160,7 +176,7 @@ export function Dashboard() {
                 }`}
               >
                 <span
-                  className={`h-1.5 w-1.5 rounded-full ${wsLive ? 'bg-bullish' : 'bg-muted'}`}
+                  className={`h-1.5 w-1.5 rounded-full ${wsLive ? 'bg-bullish animate-soft-pulse' : 'bg-muted'}`}
                 />
                 {wsLive ? 'WebSocket live' : 'REST mode'}
               </span>
@@ -170,7 +186,8 @@ export function Dashboard() {
         </header>
 
         <main
-          className="flex-1 overflow-x-hidden px-3 pb-24 pt-5 sm:px-4 sm:pt-6 lg:px-6 lg:pb-8"
+          className="page-enter flex-1 overflow-x-hidden px-3 pb-24 pt-5 sm:px-4 sm:pt-6 lg:px-6 lg:pb-8"
+          key={`main-${section}`}
           style={{ minHeight: 'calc(100dvh - 7rem)' }}
         >
           {section === 'shemitah' ? (
@@ -196,7 +213,7 @@ export function Dashboard() {
                       className="scroll-mt-28"
                       aria-labelledby={`heading-${cat}`}
                     >
-                      <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+                      <div className="mb-4 flex flex-wrap items-end justify-between gap-2 animate-fade-up">
                         <div>
                           <h2
                             id={`heading-${cat}`}

@@ -2,6 +2,7 @@ import type { ReactNode } from 'react'
 import clsx from 'clsx'
 import { ASSETS, SECTION_META } from '../constants/assets'
 import type { AssetCategory, NavSection } from '../types'
+import { BrandLogo } from './BrandLogo'
 
 interface Props {
   activeSection: NavSection
@@ -132,32 +133,32 @@ export function Sidebar({
 
       <aside
         className={clsx(
-          'fixed inset-y-0 left-0 z-50 flex w-[min(19rem,90vw)] flex-col border-r border-border/70 bg-sidebar shadow-nav transition-transform duration-200 ease-out lg:static lg:z-0 lg:w-[17.5rem] lg:translate-x-0 lg:shrink-0',
+          'fixed inset-y-0 left-0 z-50 flex w-[min(19rem,90vw)] flex-col border-r border-border/60 bg-sidebar/95 shadow-nav backdrop-blur-xl transition-transform duration-300 ease-out lg:static lg:z-0 lg:w-[17.5rem] lg:translate-x-0 lg:shrink-0',
           open ? 'translate-x-0' : '-translate-x-full',
         )}
       >
         {/* Brand */}
         <div className="relative overflow-hidden border-b border-border/50 px-4 py-4">
           <div
-            className="pointer-events-none absolute -right-6 -top-8 h-28 w-28 rounded-full bg-accent/10 blur-2xl"
+            className="ambient-orb pointer-events-none absolute -right-8 -top-10 h-32 w-32 rounded-full bg-accent/15 blur-3xl"
             aria-hidden
           />
-          <div className="relative flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent to-sky-400 text-sm font-extrabold tracking-tight text-surface shadow-lg shadow-accent/20">
-              CM
-            </div>
-            <div className="min-w-0">
-              <div className="truncate text-[15px] font-extrabold tracking-tight text-slate-50">
-                CryptoMacro
-              </div>
-              <div className="text-[11px] font-medium text-muted">
-                Markets · Macro · Cycles
-              </div>
-            </div>
+          <div className="relative flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                onNavigate('dashboard')
+                onClose()
+              }}
+              className="min-w-0 flex-1 pressable rounded-xl text-left"
+              aria-label="CryptoMacro home"
+            >
+              <BrandLogo size={40} withWordmark />
+            </button>
             <button
               type="button"
               onClick={onClose}
-              className="ml-auto flex min-h-10 min-w-10 touch-manipulation items-center justify-center rounded-lg text-muted hover:bg-white/5 hover:text-slate-100 lg:hidden"
+              className="pressable ml-auto flex min-h-10 min-w-10 touch-manipulation items-center justify-center rounded-lg text-muted hover:bg-white/5 hover:text-slate-100 lg:hidden"
               aria-label="Close navigation"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -192,18 +193,24 @@ export function Sidebar({
                       onClose()
                     }}
                     className={clsx(
-                      'group flex min-h-12 w-full touch-manipulation items-center gap-3 rounded-xl px-3 text-left transition-all duration-150',
+                      'pressable group relative flex min-h-12 w-full touch-manipulation items-center gap-3 overflow-hidden rounded-xl px-3 text-left',
                       active
-                        ? 'bg-accent/12 text-accent ring-1 ring-accent/30 shadow-sm shadow-accent/5'
-                        : 'text-slate-300 hover:bg-white/[0.04] hover:text-white',
+                        ? 'bg-accent/12 text-accent ring-1 ring-accent/35 shadow-glow'
+                        : 'text-slate-300 hover:bg-white/[0.05] hover:text-white',
                     )}
                   >
+                    {active && (
+                      <span
+                        className="nav-active-rail absolute inset-y-2 left-0 w-1 rounded-full bg-gradient-to-b from-accent to-sky-400"
+                        aria-hidden
+                      />
+                    )}
                     <span
                       className={clsx(
-                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors',
+                        'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-200',
                         active
-                          ? 'bg-accent/20 text-accent'
-                          : 'bg-white/[0.04] text-muted group-hover:text-slate-200',
+                          ? 'bg-accent/20 text-accent shadow-inner'
+                          : 'bg-white/[0.04] text-muted group-hover:scale-105 group-hover:text-slate-200',
                       )}
                     >
                       {item.icon}
@@ -223,7 +230,7 @@ export function Sidebar({
                     </span>
                     {active && (
                       <span
-                        className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent"
+                        className="h-1.5 w-1.5 shrink-0 rounded-full bg-accent animate-soft-pulse"
                         aria-hidden
                       />
                     )}
@@ -270,9 +277,9 @@ export function Sidebar({
                           onNavigate('dashboard', a.id)
                           onClose()
                         }}
-                        className="group flex min-h-10 w-full touch-manipulation items-center gap-2 rounded-lg px-2.5 text-left transition-colors hover:bg-white/[0.04]"
+                        className="pressable group flex min-h-10 w-full touch-manipulation items-center gap-2 rounded-lg px-2.5 text-left hover:bg-white/[0.05]"
                       >
-                        <span className="w-[4.5rem] shrink-0 font-mono text-[12px] font-semibold tabular-nums text-slate-200 group-hover:text-accent">
+                        <span className="w-[4.5rem] shrink-0 font-mono text-[12px] font-semibold tabular-nums text-slate-200 transition-colors group-hover:text-accent">
                           {a.symbol}
                         </span>
                         <span className="min-w-0 flex-1 truncate text-[12px] text-muted group-hover:text-slate-300">

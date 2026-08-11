@@ -77,7 +77,7 @@ const TABS: {
 export function MobileNav({ active, onChange }: Props) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/60 bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border/50 bg-surface/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl md:hidden"
       aria-label="Primary"
     >
       <ul className="grid h-[calc(4rem+env(safe-area-inset-bottom))] grid-cols-4 px-0.5">
@@ -89,15 +89,17 @@ export function MobileNav({ active, onChange }: Props) {
                 type="button"
                 onClick={() => onChange(tab.id)}
                 className={clsx(
-                  'flex h-full min-h-11 w-full touch-manipulation flex-col items-center justify-center gap-0.5 text-[9px] font-bold tracking-wide transition-colors sm:text-[10px]',
+                  'pressable flex h-full min-h-11 w-full touch-manipulation flex-col items-center justify-center gap-0.5 text-[9px] font-bold tracking-wide sm:text-[10px]',
                   isActive ? 'text-accent' : 'text-muted hover:text-slate-200',
                 )}
                 aria-current={isActive ? 'page' : undefined}
               >
                 <span
                   className={clsx(
-                    'flex h-8 w-8 items-center justify-center rounded-xl transition-colors',
-                    isActive ? 'bg-accent/15 text-accent' : 'text-current',
+                    'flex h-8 w-8 items-center justify-center rounded-xl transition-all duration-200',
+                    isActive
+                      ? 'bg-accent/15 text-accent shadow-glow scale-105'
+                      : 'text-current',
                   )}
                 >
                   {tab.icon(isActive)}
