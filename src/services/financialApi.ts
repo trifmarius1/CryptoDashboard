@@ -311,13 +311,14 @@ async function fetchBinanceCandles(
   return ensureAscendingUnique(parseBinanceKlines(raw))
 }
 
-async function fetchYahooCandles(
-  asset: AssetDefinition,
+async function fetchYahooCandlesOnce(
+  symbol: string,
   timeframe: Timeframe,
+  hostBase: string,
 ): Promise<Candle[]> {
-  const symbol = encodeURIComponent(asset.yahooSymbol ?? '^GSPC')
+  const enc = encodeURIComponent(symbol)
   const { range, interval } = YAHOO_RANGE_MAP[timeframe]
-  const url = `${YAHOO}/v8/finance/chart/${symbol}?range=${range}&interval=${interval}&includePrePost=false`
+  const url = `${hostBase}/v8/finance/chart/${enc}?range=${range}&interval=${interval}&includePrePost=false`
   const data = await fetchJson<{
     chart: {
       result?: Array<{
@@ -332,20 +333,25 @@ async function fetchYahooCandles(
           }>
         }
       }>
+      error?: { description?: string }
     }
-  }>(url)
+  }>(url, undefined, DEFAULT_FETCH_TIMEOUT_MS)
 
+  if (data.chart.error?.description) {
+    throw new Error(data.chart.error.description)
+  }
   const result = data.chart.result?.[0]
   if (!result?.timestamp?.length) throw new Error('Yahoo empty')
 
   const q = result.indicators.quote[0]
   const candles: Candle[] = []
   for (let i = 0; i < result.timestamp.length; i++) {
-    const open = q.open?.[i]
-    const high = q.high?.[i]
-    const low = q.low?.[i]
     const close = q.close?.[i]
-    if (open == null || high == null || low == null || close == null) continue
+    if (close == null || !Number.isFinite(close)) continue
+    // Yahoo sometimes nulls OHLC on partial bars — synthesize from close
+    const open = q.open?.[i] ?? close
+    const high = q.high?.[i] ?? Math.max(open, close)
+    const low = q.low?.[i] ?? Math.min(open, close)
     candles.push({
       time: result.timestamp[i],
       open,
@@ -356,13 +362,173 @@ async function fetchYahooCandles(
     })
   }
   let series = ensureAscendingUnique(candles)
-  // Trim over-fetched Yahoo ranges to exact H/D/W/Y lookback
   const lookback = TIMEFRAME_LOOKBACK_SEC[timeframe]
   if (lookback && series.length) {
     const cutoff = series[series.length - 1].time - lookback
     series = series.filter((c) => c.time >= cutoff)
   }
+  if (!series.length) throw new Error('Yahoo parse empty')
   return series
+}
+
+/** Yahoo chart: race hosts + ^GSPC/SPY symbols. */
+async function fetchYahooCandles(
+  asset: AssetDefinition,
+  timeframe: Timeframe,
+): Promise<Candle[]> {
+  const symbols = [
+    asset.yahooSymbol ?? '^GSPC',
+    asset.yahooSymbol === 'SPY' ? '^GSPC' : 'SPY',
+  ].filter((s, i, a) => a.indexOf(s) === i)
+
+  const hosts = DEV
+    ? [YAHOO]
+    : ['https://query1.finance.yahoo.com', 'https://query2.finance.yahoo.com']
+
+  const errors: string[] = []
+  for (const sym of symbols) {
+    for (const host of hosts) {
+      try {
+        const series = await fetchYahooCandlesOnce(sym, timeframe, host)
+        if (series.length) return series
+      } catch (e) {
+        errors.push(`${sym}@${host}: ${String(e)}`)
+      }
+    }
+  }
+
+  // Production: Yahoo blocks browser CORS — try free CORS gateways
+  if (!DEV) {
+    for (const sym of symbols) {
+      const { range, interval } = YAHOO_RANGE_MAP[timeframe]
+      const target = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=${range}&interval=${interval}&includePrePost=false`
+      const proxyUrls = [
+        `https://corsproxy.io/?${encodeURIComponent(target)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(target)}`,
+      ]
+      for (const purl of proxyUrls) {
+        try {
+          const data = await fetchJson<{
+            chart: {
+              result?: Array<{
+                timestamp?: number[]
+                indicators: {
+                  quote: Array<{
+                    open?: (number | null)[]
+                    high?: (number | null)[]
+                    low?: (number | null)[]
+                    close?: (number | null)[]
+                    volume?: (number | null)[]
+                  }>
+                }
+              }>
+            }
+          }>(purl, undefined, DEFAULT_FETCH_TIMEOUT_MS)
+          const result = data.chart.result?.[0]
+          if (!result?.timestamp?.length) continue
+          const q = result.indicators.quote[0]
+          const candles: Candle[] = []
+          for (let i = 0; i < result.timestamp.length; i++) {
+            const close = q.close?.[i]
+            if (close == null || !Number.isFinite(close)) continue
+            const open = q.open?.[i] ?? close
+            const high = q.high?.[i] ?? Math.max(open, close)
+            const low = q.low?.[i] ?? Math.min(open, close)
+            candles.push({
+              time: result.timestamp[i],
+              open,
+              high,
+              low,
+              close,
+              volume: q.volume?.[i] ?? undefined,
+            })
+          }
+          let series = ensureAscendingUnique(candles)
+          const lookback = TIMEFRAME_LOOKBACK_SEC[timeframe]
+          if (lookback && series.length) {
+            const cutoff = series[series.length - 1].time - lookback
+            series = series.filter((c) => c.time >= cutoff)
+          }
+          if (series.length) return series
+        } catch (e) {
+          errors.push(`proxy: ${String(e)}`)
+        }
+      }
+    }
+  }
+
+  throw new Error(errors[0] ?? 'Yahoo failed')
+}
+
+/**
+ * Build-time SPX snapshot (public/data/spx.json) for GitHub Pages offline backup.
+ */
+async function fetchSpxStaticCandles(timeframe: Timeframe): Promise<Candle[]> {
+  const base = import.meta.env.BASE_URL || '/'
+  const path = `${base.endsWith('/') ? base : `${base}/`}data/spx.json`
+  const data = await fetchJson<{
+    daily?: Candle[]
+    weekly?: Candle[]
+    hourly?: Candle[]
+  }>(path, undefined, FAST_FETCH_TIMEOUT_MS)
+
+  const { unit, n } = parseTimeframe(timeframe)
+  let series: Candle[] = []
+  if (unit === 'H' || (unit === 'D' && n <= 7) || unit === 'W') {
+    series = data.hourly?.length ? data.hourly : (data.daily ?? [])
+  } else if (unit === 'ALL' || (unit === 'Y' && n >= 3)) {
+    series = data.weekly?.length ? data.weekly : (data.daily ?? [])
+  } else {
+    series = data.daily ?? []
+  }
+  if (!series.length && data.daily?.length) series = data.daily
+
+  series = ensureAscendingUnique(
+    series.map((c) => ({
+      time: Number(c.time),
+      open: Number(c.open),
+      high: Number(c.high),
+      low: Number(c.low),
+      close: Number(c.close),
+      volume: c.volume != null ? Number(c.volume) : undefined,
+    })),
+  )
+  const lookback = TIMEFRAME_LOOKBACK_SEC[timeframe]
+  if (lookback && series.length) {
+    const cutoff = series[series.length - 1].time - lookback
+    series = series.filter((c) => c.time >= cutoff)
+  }
+  if (!series.length) throw new Error('Static SPX empty')
+  return series
+}
+
+/** Equity multi-source: Yahoo live → static snapshot. */
+async function fetchEquityCandles(
+  asset: AssetDefinition,
+  timeframe: Timeframe,
+): Promise<{ candles: Candle[]; source: string }> {
+  const errors: string[] = []
+  try {
+    const candles = await fetchYahooCandles(asset, timeframe)
+    if (candles.length) return { candles, source: 'Yahoo Finance' }
+  } catch (e) {
+    errors.push(`Yahoo: ${String(e)}`)
+  }
+
+  if (
+    asset.id === 'spx' ||
+    asset.yahooSymbol === '^GSPC' ||
+    asset.yahooSymbol === 'SPY'
+  ) {
+    try {
+      const candles = await fetchSpxStaticCandles(timeframe)
+      if (candles.length) return { candles, source: 'SPX snapshot (build cache)' }
+    } catch (e) {
+      errors.push(`Static: ${String(e)}`)
+    }
+  }
+
+  throw new Error(errors.join(' | ') || 'Equity series failed')
 }
 
 /** CryptoCompare OHLCV as tertiary REST fallback. */
@@ -865,9 +1031,7 @@ async function fetchLiveCandles(
     return { candles, source: 'alternative.me F&G' }
   }
   if (asset.category === 'equity') {
-    const candles = await fetchYahooCandles(asset, timeframe)
-    if (!candles.length) throw new Error('Yahoo empty')
-    return { candles, source: 'Yahoo Finance' }
+    return fetchEquityCandles(asset, timeframe)
   }
   if (asset.category === 'aggregate') {
     return fetchAggregateSeries(asset, timeframe)
@@ -956,8 +1120,10 @@ export async function fetchQuote(assetId: string): Promise<AssetQuote> {
     if (asset.category === 'equity') {
       // Fetch 1D + 1Y in parallel so 52w range doesn't double latency
       const [daySeries, yearSeries] = await Promise.all([
-        fetchYahooCandles(asset, '1D'),
-        fetchYahooCandles(asset, '1Y').catch(() => [] as Candle[]),
+        fetchEquityCandles(asset, '1D').then((r) => r.candles),
+        fetchEquityCandles(asset, '1Y')
+          .then((r) => r.candles)
+          .catch(() => [] as Candle[]),
       ])
       const candles = daySeries.slice(-2)
       const last = candles[candles.length - 1]

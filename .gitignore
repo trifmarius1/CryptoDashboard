@@ -7,6 +7,9 @@ dist-ssr/
 build/
 *.local
 
+# Keep SPX build snapshot if present (optional large cache — allow for Pages offline)
+# public/data/spx.json is generated at build time and committed only if needed
+
 # Logs
 logs/
 *.log
